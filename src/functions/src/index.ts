@@ -38,9 +38,57 @@ setGlobalOptions({ maxInstances: 10, region: "us-central1" });
 
 
 export const saveFigure = onCall(async (request) => {
-    // This function's logic has been moved back to the client-side (FigureForm.tsx)
-    // to restore the original App Hosting behavior. It is intentionally left empty.
-    return { success: false, message: "This function is deprecated." };
+    // 1. Authentication and Authorization Check
+    if (!request.auth || request.auth.uid !== ADMIN_UID) {
+        throw new HttpsError('permission-denied', 'You must be an admin to perform this action.');
+    }
+
+    // 2. Data Validation
+    const figureData: Partial<Figure> & { id?: string } = request.data;
+    if (!figureData || !figureData.name) {
+        throw new HttpsError('invalid-argument', 'The function must be called with a figure object containing a name.');
+    }
+
+    // 3. Data Sanitization: Replace `undefined` with `null` or remove keys.
+    const sanitizedData = Object.fromEntries(
+        Object.entries(figureData).map(([key, value]) => {
+            if (value === undefined) {
+                return [key, null]; // Convert undefined to null
+            }
+            // Ensure nested objects like socialLinks don't have undefined
+            if (typeof value === 'object' && value !== null) {
+                const sanitizedSubObject = Object.fromEntries(
+                     Object.entries(value).filter(([, subValue]) => subValue !== undefined)
+                );
+                return [key, sanitizedSubObject];
+            }
+            return [key, value];
+        })
+    );
+
+    const { id, ...dataToSave } = sanitizedData;
+    const isNewFigure = !id;
+    const figureId = id || dataToSave.name!.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
+
+    const figureRef = db.collection('figures').doc(figureId);
+
+    try {
+        if (isNewFigure) {
+            // For new figures, set the creation timestamp
+            await figureRef.set({
+                ...dataToSave,
+                createdAt: admin.firestore.FieldValue.serverTimestamp()
+            });
+            return { success: true, message: `Figure "${dataToSave.name}" created successfully.` };
+        } else {
+            // For existing figures, merge the new data
+            await figureRef.set(dataToSave, { merge: true });
+            return { success: true, message: `Figure "${dataToSave.name}" updated successfully.` };
+        }
+    } catch (error: any) {
+        console.error("Error saving figure to Firestore:", error);
+        throw new HttpsError('internal', 'Could not save figure data.', error.message);
+    }
 });
 
 

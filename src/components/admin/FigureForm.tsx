@@ -11,8 +11,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Terminal, Sparkles, Loader2, Check, ShieldAlert, ThumbsDown, Youtube, X, Plus, Camera } from 'lucide-react';
 import { doc, setDoc, serverTimestamp, writeBatch, Timestamp, collection, getDocs, deleteDoc, runTransaction } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
-import { addFigureToFirestore, updateFigureInFirestore } from '@/lib/placeholder-data';
+import { db, callFirebaseFunction } from '@/lib/firebase';
 import type { Figure, EmotionKey, AttitudeKey, ProfileType, MediaSubcategory, Hashtag, YoutubeShort, TiktokVideo, InstagramPost } from '@/lib/types';
 import slugify from 'slugify'; 
 import { Checkbox } from '@/components/ui/checkbox';
@@ -57,7 +56,6 @@ const generateNameKeywords = (name: string): string[] => {
             keywords.add(word.substring(0, i));
         }
     });
-
     return Array.from(keywords);
 };
 
@@ -366,22 +364,14 @@ const FigureForm: React.FC<FigureFormProps> = ({ initialData }) => {
     setError(null);
     setSuccess(null);
 
-    let figureDocId = initialData?.id || slugify(name.trim(), { lower: true, strict: true });
-    
-    if (!figureDocId) {
-      setError('No se pudo generar un ID para la figura. Asegúrate de que el nombre no esté vacío.');
+    const nameTrimmed = name.trim();
+    if (!nameTrimmed) {
+      setError('El nombre del perfil es obligatorio.');
       setIsSaving(false);
       return;
     }
 
-    if (!name.trim()) {
-        setError('El nombre del perfil es obligatorio.');
-        setIsSaving(false);
-        return;
-    }
-
     try {
-      const nameTrimmed = name.trim();
       const hashtagsLower = hashtags.map(tag => tag.toLowerCase());
       
       const attitudeCounts = { ...defaultAttitudeCounts };
@@ -389,68 +379,60 @@ const FigureForm: React.FC<FigureFormProps> = ({ initialData }) => {
         delete (attitudeCounts as Partial<typeof attitudeCounts>).simp;
       }
 
+      // Sanitize the data: convert undefined to null
       const figureData: Partial<Figure> = {
+        id: initialData?.id,
         name: nameTrimmed,
         profileType: profileType,
-        description: description.trim() || "", 
+        description: description.trim() || undefined, 
         photoUrl: photoUrl.trim() || 'https://placehold.co/400x600.png',
         hashtags: hashtags,
         socialLinks: socialLinks,
         isFeatured: isFeatured,
-        nationalityCode: nationalityCode,
+        nationalityCode: nationalityCode || undefined,
         status: initialData?.status || 'approved',
         nameKeywords: generateNameKeywords(nameTrimmed),
         hashtagKeywords: generateHashtagKeywords(hashtags),
         hashtagsLower: hashtagsLower,
-        nationality: countryCodeToNameMap.get(nationalityCode) || '',
+        nationality: countryCodeToNameMap.get(nationalityCode) || undefined,
         age: birthDate ? differenceInYears(new Date(), birthDate) : undefined,
-        height: heightCm ? `${heightCm} cm` : '',
-        category: category.trim(), 
-        occupation: occupation.trim(), 
-        gender: gender.trim(),
-        alias: alias.trim(), 
-        species: species.trim(),
-        birthDateOrAge: birthDate ? birthDate.toISOString() : '',
-        deathDate: deathDate ? deathDate.toISOString() : '',
-        birthPlace: birthPlace.trim(), 
-        statusLiveOrDead: statusLiveOrDead.trim(),
-        maritalStatus: maritalStatus.trim(), 
-        heightCm: heightCm, 
-        weight: weight.trim(),
-        hairColor: hairColor.trim(), 
-        eyeColor: eyeColor.trim(), 
-        distinctiveFeatures: distinctiveFeatures.trim(),
-        mediaSubcategory, 
-        mediaGenre: mediaGenre.trim(),
-        releaseDate: releaseDate ? releaseDate.toISOString() : '',
-        developer: developer.trim(), 
-        publisher: publisher.trim(),
+        height: heightCm ? `${heightCm} cm` : undefined,
+        category: category.trim() || undefined, 
+        occupation: occupation.trim() || undefined, 
+        gender: gender.trim() || undefined,
+        alias: alias.trim() || undefined, 
+        species: species.trim() || undefined,
+        birthDateOrAge: birthDate ? birthDate.toISOString() : undefined,
+        deathDate: deathDate ? deathDate.toISOString() : undefined,
+        birthPlace: birthPlace.trim() || undefined, 
+        statusLiveOrDead: statusLiveOrDead.trim() || undefined,
+        maritalStatus: maritalStatus.trim() || undefined, 
+        heightCm: heightCm || undefined, 
+        weight: weight.trim() || undefined,
+        hairColor: hairColor.trim() || undefined, 
+        eyeColor: eyeColor.trim() || undefined, 
+        distinctiveFeatures: distinctiveFeatures.trim() || undefined,
+        mediaSubcategory: mediaSubcategory || undefined, 
+        mediaGenre: mediaGenre.trim() || undefined,
+        releaseDate: releaseDate ? releaseDate.toISOString() : undefined,
+        developer: developer.trim() || undefined, 
+        publisher: publisher.trim() || undefined,
         platforms: platformsInput.split(',').map(p => p.trim()).filter(Boolean),
-        director: director.trim(), 
-        studio: studio.trim(), 
-        author: author.trim(), 
-        artist: artist.trim(),
-        founder: founder.trim(), 
-        industry: industry.trim(), 
-        websiteUrl: websiteUrl.trim(),
+        director: director.trim() || undefined, 
+        studio: studio.trim() || undefined, 
+        author: author.trim() || undefined, 
+        artist: artist.trim() || undefined,
+        founder: founder.trim() || undefined, 
+        industry: industry.trim() || undefined, 
+        websiteUrl: websiteUrl.trim() || undefined,
+        perceptionCounts: initialData?.perceptionCounts || { ...defaultPerceptionCounts },
+        attitudeCounts: initialData?.attitudeCounts || attitudeCounts,
+        ratingCounts: initialData?.ratingCounts || {},
       };
       
-      const saveData: Figure = {
-          ...figureData,
-          id: figureDocId,
-          perceptionCounts: initialData?.perceptionCounts || { ...defaultPerceptionCounts },
-          attitudeCounts: initialData?.attitudeCounts || attitudeCounts,
-          ratingCounts: initialData?.ratingCounts || {},
-          createdAt: initialData?.createdAt || new Date().toISOString(),
-      };
-      
-      if (initialData) {
-          await updateFigureInFirestore(saveData);
-      } else {
-          await addFigureToFirestore(saveData);
-      }
+      const result = await callFirebaseFunction('saveFigure', figureData);
 
-      setSuccess(`Perfil "${name}" guardado exitosamente.`);
+      setSuccess(result.message || `Perfil "${name}" guardado exitosamente.`);
       
       setTimeout(() => {
         router.push(`/admin/figures`);
