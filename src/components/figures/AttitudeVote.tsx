@@ -41,7 +41,7 @@ const defaultAttitudeCountsData: Record<AttitudeKey, number> = {
 };
 
 export const AttitudeVote: React.FC<AttitudeVoteProps> = ({ figureId, figureName, profileType, attitudeCounts: initialAttitudeCounts, onVote }) => {
-  const { firebaseUser, isLoading: isAuthLoading } = useAuth();
+  const { firebaseUser, currentUser, localProfile, isLoading: isAuthLoading } = useAuth();
   const [selectedAttitude, setSelectedAttitude] = useState<AttitudeKey | null>(null);
   const [isVoting, setIsVoting] = useState(false);
   const { toast } = useToast();
@@ -76,9 +76,10 @@ export const AttitudeVote: React.FC<AttitudeVoteProps> = ({ figureId, figureName
 
 
   const handleVote = async (newAttitude: AttitudeKey) => {
-    // Correctly handle the case where the user clicks before auth is ready
-    if (isVoting || isAuthLoading || !firebaseUser) {
-        if (!isAuthLoading && !firebaseUser) { // Only show toast if auth is resolved and there's no user
+    const canVote = (!isAuthLoading && firebaseUser && ((firebaseUser.isAnonymous && localProfile) || (!firebaseUser.isAnonymous && currentUser)));
+
+    if (isVoting || !canVote) {
+        if (!isAuthLoading && !firebaseUser) {
             toast({ title: "Error", description: "Debes iniciar sesión o crear un perfil de invitado para votar.", variant: "destructive" });
         }
         return;
@@ -91,10 +92,8 @@ export const AttitudeVote: React.FC<AttitudeVoteProps> = ({ figureId, figureName
     const previousVote = selectedAttitude;
     
     try {
-        // Use the new client-side function
         await voteOnAttitudeClient(figureId, finalVote, previousVote);
 
-        // --- Handle local storage and UI state ---
         let updatedAttitudes: Attitude[] = JSON.parse(localStorage.getItem(storageKey) || '[]');
         const voteIndex = updatedAttitudes.findIndex(a => a.figureId === figureId);
 
@@ -134,6 +133,9 @@ export const AttitudeVote: React.FC<AttitudeVoteProps> = ({ figureId, figureName
     opt.profileType === 'all' || (opt.profileType === 'character' && profileType === 'character')
   );
 
+  const isReadyToVote = !isAuthLoading && firebaseUser && ((firebaseUser.isAnonymous && localProfile) || (!firebaseUser.isAnonymous && currentUser));
+  const isDisabled = isVoting || isAuthLoading || !isReadyToVote;
+
   return (
     <Card className="border border-white/20 bg-black">
       <CardHeader>
@@ -159,7 +161,7 @@ export const AttitudeVote: React.FC<AttitudeVoteProps> = ({ figureId, figureName
                 colorClass,
                 selectedAttitude === key && selectedClass
               )}
-              disabled={isVoting || isAuthLoading}
+              disabled={isDisabled}
               style={{ minHeight: '100px' }}
             >
               {isVoting && selectedAttitude === key && <Loader2 className="absolute h-6 w-6 animate-spin" />}

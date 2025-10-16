@@ -45,7 +45,7 @@ export const PerceptionEmotions: React.FC<PerceptionEmotionsProps> = ({
   targetId,
   onVote
 }) => {
-  const { firebaseUser, isLoading: isAuthLoading } = useAuth();
+  const { firebaseUser, currentUser, localProfile, isLoading: isAuthLoading } = useAuth();
   const [selectedEmotion, setSelectedEmotion] = useState<EmotionKey | null>(null);
   const [isVoting, setIsVoting] = useState(false);
   const { toast } = useToast();
@@ -68,8 +68,12 @@ export const PerceptionEmotions: React.FC<PerceptionEmotionsProps> = ({
   }, [id, firebaseUser, storageKey]);
 
   const handleVote = async (newEmotion: EmotionKey) => {
-    if (isVoting || isAuthLoading || !firebaseUser || !id) {
-      if (!isAuthLoading && !firebaseUser) toast({ title: "Error", description: "Inicia sesión o crea un perfil de invitado para votar.", variant: "destructive" });
+    const canVote = (!isAuthLoading && firebaseUser && ((firebaseUser.isAnonymous && localProfile) || (!firebaseUser.isAnonymous && currentUser)));
+
+    if (isVoting || !canVote) {
+      if (!isAuthLoading && !firebaseUser) {
+        toast({ title: "Error", description: "Inicia sesión o crea un perfil de invitado para votar.", variant: "destructive" });
+      }
       return;
     }
       
@@ -164,6 +168,8 @@ export const PerceptionEmotions: React.FC<PerceptionEmotionsProps> = ({
 
 
   const isPopover = targetType === 'short' || targetType === 'instagram';
+  const isReadyToVote = !isAuthLoading && firebaseUser && ((firebaseUser.isAnonymous && localProfile) || (!firebaseUser.isAnonymous && currentUser));
+  const isDisabled = isVoting || isAuthLoading || !isReadyToVote;
 
   const content = (
     <div className="space-y-4">
@@ -179,7 +185,7 @@ export const PerceptionEmotions: React.FC<PerceptionEmotionsProps> = ({
               isPopover ? "min-h-[90px]" : "min-h-[120px]", // Smaller buttons for popover version
             )}
             onClick={() => handleVote(key)}
-            disabled={isVoting || isAuthLoading}
+            disabled={isDisabled}
           >
             {isVoting && selectedEmotion === key && <Loader2 className="absolute h-5 w-5 animate-spin" />}
             <div className={cn("relative mb-1", isPopover ? "w-10 h-10" : "w-16 h-16")} data-ai-hint={`emoji ${label}`}>
