@@ -77,7 +77,9 @@ export const AttitudeVote: React.FC<AttitudeVoteProps> = ({ figureId, figureName
 
   const handleVote = async (newAttitude: AttitudeKey) => {
     if (isVoting || isAuthLoading || !firebaseUser) {
-        if (!firebaseUser) toast({ title: "Error", description: "Debes iniciar sesión para votar.", variant: "destructive" });
+        if (!firebaseUser && !isAuthLoading) {
+            toast({ title: "Error", description: "Debes iniciar sesión para votar.", variant: "destructive" });
+        }
         return;
     }
     
