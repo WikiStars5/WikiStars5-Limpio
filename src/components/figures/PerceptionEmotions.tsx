@@ -70,7 +70,7 @@ export const PerceptionEmotions: React.FC<PerceptionEmotionsProps> = ({
 
   const handleVote = async (newEmotion: EmotionKey) => {
     if (isVoting || isAuthLoading || !firebaseUser || !id) {
-      if (!firebaseUser) toast({ title: "Error", description: "Inicia sesión para votar.", variant: "destructive" });
+      if (!isAuthLoading && !firebaseUser) toast({ title: "Error", description: "Inicia sesión o crea un perfil de invitado para votar.", variant: "destructive" });
       return;
     }
       
