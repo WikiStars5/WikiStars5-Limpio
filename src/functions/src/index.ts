@@ -215,7 +215,6 @@ export const voteOnAttitude = onCall(async (request) => {
 
         const figureRef = db.collection('figures').doc(figureId);
         
-        // Use a transaction for atomic read-modify-write
         const newCounts = await db.runTransaction(async (transaction) => {
             const figureDoc = await transaction.get(figureRef);
             if (!figureDoc.exists) {
@@ -223,16 +222,15 @@ export const voteOnAttitude = onCall(async (request) => {
             }
 
             const currentData = figureDoc.data() as Figure;
-            // Initialize with default if it doesn't exist to prevent errors
             const attitudeCounts = currentData.attitudeCounts || {
                 neutral: 0, fan: 0, simp: 0, hater: 0
             };
 
             const newAttitudeCounts = { ...attitudeCounts };
 
-            // Decrement previous vote if it exists
-            if (previousVote && typeof newAttitudeCounts[previousVote] === 'number') {
-                newAttitudeCounts[previousVote] = Math.max(0, newAttitudeCounts[previousVote] - 1);
+            // Decrement previous vote only if it exists
+            if (previousVote) {
+                newAttitudeCounts[previousVote] = Math.max(0, (newAttitudeCounts[previousVote] || 0) - 1);
             }
 
             // Increment new vote if it exists
@@ -244,21 +242,17 @@ export const voteOnAttitude = onCall(async (request) => {
                 attitudeCounts: newAttitudeCounts
             });
             
-            // Return the final state of the counts
             return newAttitudeCounts;
         });
 
-        // If the transaction is successful, return the new counts.
         return { success: true, data: newCounts };
 
     } catch (error) {
-        // If the error is already an HttpsError, re-throw it.
         if (error instanceof HttpsError) {
             throw error;
         }
-        // For any other unexpected errors, log them and throw a generic internal error.
         console.error(`[voteOnAttitude] Critical Transaction Failure for figure ${request.data.figureId}:`, error);
-        throw new HttpsError('internal', 'Ocurrió un error inesperado al procesar tu voto. Revisa los logs de Cloud para más detalles.');
+        throw new HttpsError('internal', 'Ocurrió un error inesperado al procesar tu voto.');
     }
 });
 
@@ -301,3 +295,5 @@ export const toggleFeaturedStatus = onCall(async (request) => {
     // to restore the original App Hosting behavior. It is intentionally left empty.
     return { success: false, message: "This function is deprecated." };
 });
+
+    
