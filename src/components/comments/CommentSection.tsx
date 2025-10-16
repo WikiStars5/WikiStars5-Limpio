@@ -327,21 +327,6 @@ export function CommentSection({ figure, highlightedCommentId, sortPreference }:
       return (
         <FormProvider {...form}>
             <form onSubmit={handleSubmit(onCommentSubmit)} className="space-y-4">
-                <FormField
-                    control={control}
-                    name="text"
-                    render={({ field }) => (
-                        <FormItem>
-                            <Textarea
-                                {...field}
-                                placeholder={`¿Qué opinas de ${figure.name}?`}
-                                rows={4}
-                                className="bg-muted/50"
-                            />
-                            <FormMessage />
-                        </FormItem>
-                    )}
-                />
                  <FormField
                     control={control}
                     name="rating"
@@ -359,6 +344,21 @@ export function CommentSection({ figure, highlightedCommentId, sortPreference }:
                       </FormItem>
                     )}
                   />
+                <FormField
+                    control={control}
+                    name="text"
+                    render={({ field }) => (
+                        <FormItem>
+                            <Textarea
+                                {...field}
+                                placeholder={`¿Qué opinas de ${figure.name}?`}
+                                rows={4}
+                                className="bg-muted/50"
+                            />
+                            <FormMessage />
+                        </FormItem>
+                    )}
+                />
 
                  <div className="flex justify-end">
                     <Button type="submit" disabled={isSubmitting}>
