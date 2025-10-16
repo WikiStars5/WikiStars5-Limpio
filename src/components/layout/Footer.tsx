@@ -13,7 +13,6 @@ export function Footer() {
         </p>
         <div className="flex gap-4 text-sm">
           <Link href="/admin/login" className="text-muted-foreground hover:text-foreground transition-colors">Admin Login</Link>
-          <a href="#" className="text-muted-foreground hover:text-foreground transition-colors">Política de Privacidad</a>
           <a href="#" className="text-muted-foreground hover:text-foreground transition-colors">Términos de Servicio</a>
         </div>
       </div>
