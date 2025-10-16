@@ -74,6 +74,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [localProfile, setLocalProfile] = useState<LocalProfile | null>(initialLocalProfile);
   const [isNotificationsEnabled, setIsNotificationsEnabled] = useState(false);
 
+  // This effect listens for a custom event to know when to re-fetch the local profile from localStorage.
+  useEffect(() => {
+    const handleProfileUpdate = () => {
+      const key = firebaseUser ? `wikistars5-local-profile-${firebaseUser.uid}` : '';
+      if (key) {
+        const item = window.localStorage.getItem(key);
+        setLocalProfile(item ? JSON.parse(item) : null);
+      }
+    };
+    window.addEventListener('local-profile-updated', handleProfileUpdate);
+    return () => window.removeEventListener('local-profile-updated', handleProfileUpdate);
+  }, [firebaseUser]);
+
+
   useEffect(() => {
     setLocalProfile(initialLocalProfile);
   }, [initialLocalProfile]);
@@ -314,6 +328,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (isAnonymous && firebaseUser) {
         const profile = { username, countryCode, gender };
         saveLocalProfile(profile);
+        // This setLocalProfile is now technically redundant because of the event listener,
+        // but it provides an immediate optimistic update.
         setLocalProfile(profile);
         return;
     }

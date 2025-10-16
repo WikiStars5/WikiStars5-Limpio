@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import { useState, useEffect, useCallback } from 'react';
@@ -33,7 +34,8 @@ export function useLocalProfile(uid: string | undefined) {
     if (!storageKey) return;
     try {
       window.localStorage.setItem(storageKey, JSON.stringify(profile));
-      // No longer setting state here, as it will be managed by AuthProvider
+      // Dispatch a custom event to notify other parts of the app, like useAuth.
+      window.dispatchEvent(new Event('local-profile-updated'));
     } catch (error) {
       console.error("Error saving to local storage", error);
     }
@@ -43,7 +45,8 @@ export function useLocalProfile(uid: string | undefined) {
       if (!storageKey) return;
       try {
         window.localStorage.removeItem(storageKey);
-        // No longer setting state here
+        // Also dispatch an event on clearing, in case the UI needs to react.
+        window.dispatchEvent(new Event('local-profile-updated'));
       } catch (error) {
         console.error("Error removing from local storage", error);
       }
