@@ -49,22 +49,23 @@ export const saveFigure = onCall(async (request) => {
         throw new HttpsError('invalid-argument', 'The function must be called with a figure object containing a name.');
     }
 
-    // 3. Data Sanitization: Replace `undefined` with `null` or remove keys.
-    const sanitizedData = Object.fromEntries(
-        Object.entries(figureData).map(([key, value]) => {
-            if (value === undefined) {
-                return [key, null]; // Convert undefined to null
+    // 3. Data Sanitization: Replace `undefined` with `null`.
+    const sanitizedData: { [key: string]: any } = {};
+    for (const key in figureData) {
+        if (Object.prototype.hasOwnProperty.call(figureData, key)) {
+            const value = (figureData as any)[key];
+            if (value !== undefined) {
+                 if (typeof value === 'object' && value !== null && !Array.isArray(value) && !(value instanceof admin.firestore.Timestamp)) {
+                    // Sanitize nested objects like socialLinks
+                     sanitizedData[key] = Object.fromEntries(
+                        Object.entries(value).filter(([, subValue]) => subValue !== undefined)
+                    );
+                 } else {
+                    sanitizedData[key] = value;
+                 }
             }
-            // Ensure nested objects like socialLinks don't have undefined
-            if (typeof value === 'object' && value !== null) {
-                const sanitizedSubObject = Object.fromEntries(
-                     Object.entries(value).filter(([, subValue]) => subValue !== undefined)
-                );
-                return [key, sanitizedSubObject];
-            }
-            return [key, value];
-        })
-    );
+        }
+    }
 
     const { id, ...dataToSave } = sanitizedData;
     const isNewFigure = !id;
@@ -246,9 +247,8 @@ export const updateUserProfile = onCall(async (request) => {
 });
 
 export const voteOnAttitude = onCall(async (request) => {
-    // This function is deprecated. The logic has been moved to the client-side
-    // in `voteOnAttitudeClient` inside `placeholder-data.ts` to match the working
-    // pattern of the emotion voting system.
+    // This function's logic has been moved back to the client-side (voteOnAttitudeClient)
+    // to restore the original App Hosting behavior. It is intentionally left empty.
     return { success: false, message: "This function is deprecated." };
 });
 
@@ -291,3 +291,5 @@ export const toggleFeaturedStatus = onCall(async (request) => {
     // to restore the original App Hosting behavior. It is intentionally left empty.
     return { success: false, message: "This function is deprecated." };
 });
+
+  

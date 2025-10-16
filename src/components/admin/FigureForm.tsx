@@ -379,58 +379,63 @@ const FigureForm: React.FC<FigureFormProps> = ({ initialData }) => {
         delete (attitudeCounts as Partial<typeof attitudeCounts>).simp;
       }
 
-      // Sanitize the data: convert undefined to null
+      // Sanitize the data: convert undefined to null before sending
       const figureData: Partial<Figure> = {
         id: initialData?.id,
         name: nameTrimmed,
         profileType: profileType,
-        description: description.trim() || undefined, 
+        description: description.trim() || null, 
         photoUrl: photoUrl.trim() || 'https://placehold.co/400x600.png',
         hashtags: hashtags,
         socialLinks: socialLinks,
         isFeatured: isFeatured,
-        nationalityCode: nationalityCode || undefined,
+        nationalityCode: nationalityCode || null,
         status: initialData?.status || 'approved',
         nameKeywords: generateNameKeywords(nameTrimmed),
         hashtagKeywords: generateHashtagKeywords(hashtags),
         hashtagsLower: hashtagsLower,
-        nationality: countryCodeToNameMap.get(nationalityCode) || undefined,
-        age: birthDate ? differenceInYears(new Date(), birthDate) : undefined,
-        height: heightCm ? `${heightCm} cm` : undefined,
-        category: category.trim() || undefined, 
-        occupation: occupation.trim() || undefined, 
-        gender: gender.trim() || undefined,
-        alias: alias.trim() || undefined, 
-        species: species.trim() || undefined,
-        birthDateOrAge: birthDate ? birthDate.toISOString() : undefined,
-        deathDate: deathDate ? deathDate.toISOString() : undefined,
-        birthPlace: birthPlace.trim() || undefined, 
-        statusLiveOrDead: statusLiveOrDead.trim() || undefined,
-        maritalStatus: maritalStatus.trim() || undefined, 
-        heightCm: heightCm || undefined, 
-        weight: weight.trim() || undefined,
-        hairColor: hairColor.trim() || undefined, 
-        eyeColor: eyeColor.trim() || undefined, 
-        distinctiveFeatures: distinctiveFeatures.trim() || undefined,
-        mediaSubcategory: mediaSubcategory || undefined, 
-        mediaGenre: mediaGenre.trim() || undefined,
-        releaseDate: releaseDate ? releaseDate.toISOString() : undefined,
-        developer: developer.trim() || undefined, 
-        publisher: publisher.trim() || undefined,
+        nationality: countryCodeToNameMap.get(nationalityCode) || null,
+        age: birthDate ? differenceInYears(new Date(), birthDate) : undefined, // Let backend calculate or handle undefined
+        height: heightCm ? `${heightCm} cm` : null,
+        category: category.trim() || null, 
+        occupation: occupation.trim() || null, 
+        gender: gender.trim() || null,
+        alias: alias.trim() || null, 
+        species: species.trim() || null,
+        birthDateOrAge: birthDate ? birthDate.toISOString() : null,
+        deathDate: deathDate ? deathDate.toISOString() : null,
+        birthPlace: birthPlace.trim() || null, 
+        statusLiveOrDead: statusLiveOrDead.trim() || null,
+        maritalStatus: maritalStatus.trim() || null, 
+        heightCm: heightCm || null, 
+        weight: weight.trim() || null,
+        hairColor: hairColor.trim() || null, 
+        eyeColor: eyeColor.trim() || null, 
+        distinctiveFeatures: distinctiveFeatures.trim() || null,
+        mediaSubcategory: mediaSubcategory || null, 
+        mediaGenre: mediaGenre.trim() || null,
+        releaseDate: releaseDate ? releaseDate.toISOString() : null,
+        developer: developer.trim() || null, 
+        publisher: publisher.trim() || null,
         platforms: platformsInput.split(',').map(p => p.trim()).filter(Boolean),
-        director: director.trim() || undefined, 
-        studio: studio.trim() || undefined, 
-        author: author.trim() || undefined, 
-        artist: artist.trim() || undefined,
-        founder: founder.trim() || undefined, 
-        industry: industry.trim() || undefined, 
-        websiteUrl: websiteUrl.trim() || undefined,
+        director: director.trim() || null, 
+        studio: studio.trim() || null, 
+        author: author.trim() || null, 
+        artist: artist.trim() || null,
+        founder: founder.trim() || null, 
+        industry: industry.trim() || null, 
+        websiteUrl: websiteUrl.trim() || null,
         perceptionCounts: initialData?.perceptionCounts || { ...defaultPerceptionCounts },
         attitudeCounts: initialData?.attitudeCounts || attitudeCounts,
         ratingCounts: initialData?.ratingCounts || {},
       };
       
-      const result = await callFirebaseFunction('saveFigure', figureData);
+      // Strict sanitization: remove any key with an 'undefined' value
+      const sanitizedFigureData = Object.fromEntries(
+        Object.entries(figureData).filter(([, value]) => value !== undefined)
+      );
+
+      const result = await callFirebaseFunction('saveFigure', sanitizedFigureData);
 
       setSuccess(result.message || `Perfil "${name}" guardado exitosamente.`);
       
@@ -775,3 +780,5 @@ const FigureForm: React.FC<FigureFormProps> = ({ initialData }) => {
 };
 
 export default FigureForm;
+
+  
