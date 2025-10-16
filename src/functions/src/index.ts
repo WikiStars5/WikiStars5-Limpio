@@ -215,7 +215,7 @@ export const voteOnAttitude = onCall(async (request) => {
 
         const figureRef = db.collection('figures').doc(figureId);
         
-        const newCounts = await db.runTransaction(async (transaction) => {
+        await db.runTransaction(async (transaction) => {
             const figureDoc = await transaction.get(figureRef);
             if (!figureDoc.exists) {
                 throw new HttpsError('not-found', 'La figura no existe.');
@@ -241,17 +241,16 @@ export const voteOnAttitude = onCall(async (request) => {
             transaction.update(figureRef, {
                 attitudeCounts: newAttitudeCounts
             });
-            
-            return newAttitudeCounts;
         });
 
-        return { success: true, data: newCounts };
+        return { success: true, message: "Voto actualizado correctamente" };
 
     } catch (error) {
         if (error instanceof HttpsError) {
+            console.error(`Error de Https en voteOnAttitude: ${error.message}`);
             throw error;
         }
-        console.error(`[voteOnAttitude] Critical Transaction Failure for figure ${request.data.figureId}:`, error);
+        console.error(`[voteOnAttitude] Fallo Crítico de Transacción para figura ${request.data.figureId}:`, error);
         throw new HttpsError('internal', 'Ocurrió un error inesperado al procesar tu voto.');
     }
 });
@@ -295,5 +294,3 @@ export const toggleFeaturedStatus = onCall(async (request) => {
     // to restore the original App Hosting behavior. It is intentionally left empty.
     return { success: false, message: "This function is deprecated." };
 });
-
-    
