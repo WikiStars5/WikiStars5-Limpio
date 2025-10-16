@@ -1,5 +1,4 @@
 
-
 "use client";
 
 import React, { useState, useEffect } from 'react';
@@ -168,45 +167,38 @@ export const PerceptionEmotions: React.FC<PerceptionEmotionsProps> = ({
 
   const content = (
     <div className="space-y-4">
-      {isAuthLoading ? (
-        <div className="flex justify-center items-center h-24">
-          <Loader2 className="h-6 w-6 animate-spin text-primary" />
-        </div>
-      ) : (
-        <div className="grid grid-cols-3 gap-2">
-          {EMOTIONS_CONFIG.map(({ key, label, imageUrl, colorClass, selectedClass }) => (
-            <Button
-              key={key}
-              variant={"outline"}
-              className={cn(
-                "flex flex-col items-center justify-start p-2 h-auto space-y-1 rounded-lg shadow-sm transition-all duration-150 ease-in-out transform hover:scale-105 bg-black",
-                colorClass,
-                selectedEmotion === key && selectedClass,
-                isPopover ? "min-h-[90px]" : "min-h-[120px]", // Smaller buttons for popover version
-                (isVoting || isAuthLoading) && selectedEmotion !== key && 'opacity-50 cursor-not-allowed'
-              )}
-              onClick={() => handleVote(key)}
-              disabled={isVoting || isAuthLoading}
-            >
-              {isVoting && selectedEmotion === key && <Loader2 className="absolute h-5 w-5 animate-spin" />}
-              <div className={cn("relative mb-1", isPopover ? "w-10 h-10" : "w-16 h-16")} data-ai-hint={`emoji ${label}`}>
-                <Image
-                  src={imageUrl}
-                  alt={label}
-                  fill
-                  className="object-contain"
-                  sizes="(max-width: 768px) 15vw, 10vw"
-                  unoptimized
-                />
-              </div>
-              <span className="text-xs font-medium text-center block">{label}</span>
-              <span className="text-sm font-bold">
-                {(perceptionCounts?.[key] || 0).toLocaleString()}
-              </span>
-            </Button>
-          ))}
-        </div>
-      )}
+      <div className="grid grid-cols-3 gap-2">
+        {EMOTIONS_CONFIG.map(({ key, label, imageUrl, colorClass, selectedClass }) => (
+          <Button
+            key={key}
+            variant={"outline"}
+            className={cn(
+              "flex flex-col items-center justify-start p-2 h-auto space-y-1 rounded-lg shadow-sm transition-all duration-150 ease-in-out transform hover:scale-105 bg-black",
+              colorClass,
+              selectedEmotion === key && selectedClass,
+              isPopover ? "min-h-[90px]" : "min-h-[120px]", // Smaller buttons for popover version
+            )}
+            onClick={() => handleVote(key)}
+            disabled={isVoting || isAuthLoading}
+          >
+            {isVoting && selectedEmotion === key && <Loader2 className="absolute h-5 w-5 animate-spin" />}
+            <div className={cn("relative mb-1", isPopover ? "w-10 h-10" : "w-16 h-16")} data-ai-hint={`emoji ${label}`}>
+              <Image
+                src={imageUrl}
+                alt={label}
+                fill
+                className="object-contain"
+                sizes="(max-width: 768px) 15vw, 10vw"
+                unoptimized
+              />
+            </div>
+            <span className="text-xs font-medium text-center block">{label}</span>
+            <span className="text-sm font-bold">
+              {(perceptionCounts?.[key] || 0).toLocaleString()}
+            </span>
+          </Button>
+        ))}
+      </div>
       <div className="text-center text-xs text-muted-foreground">
         <p>Total de respuestas: <span className="font-bold">{totalVotes.toLocaleString()}</span></p>
       </div>

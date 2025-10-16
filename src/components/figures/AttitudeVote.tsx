@@ -76,8 +76,9 @@ export const AttitudeVote: React.FC<AttitudeVoteProps> = ({ figureId, figureName
 
 
   const handleVote = async (newAttitude: AttitudeKey) => {
+    // Correctly handle the case where the user clicks before auth is ready
     if (isVoting || isAuthLoading || !firebaseUser) {
-        if (!isAuthLoading && !firebaseUser) {
+        if (!isAuthLoading && !firebaseUser) { // Only show toast if auth is resolved and there's no user
             toast({ title: "Error", description: "Debes iniciar sesión o crear un perfil de invitado para votar.", variant: "destructive" });
         }
         return;
@@ -156,8 +157,7 @@ export const AttitudeVote: React.FC<AttitudeVoteProps> = ({ figureId, figureName
               className={cn(
                 "flex flex-col items-center justify-center p-3 h-auto space-y-1.5 rounded-lg shadow-sm transition-all duration-150 ease-in-out transform hover:scale-105 border bg-black",
                 colorClass,
-                selectedAttitude === key && selectedClass,
-                (isVoting || isAuthLoading) && selectedAttitude !== key && 'opacity-50 cursor-not-allowed'
+                selectedAttitude === key && selectedClass
               )}
               disabled={isVoting || isAuthLoading}
               style={{ minHeight: '100px' }}
