@@ -3,7 +3,7 @@
 
 import React, { useState, useEffect } from 'react';
 import type { Figure, AttitudeKey, Attitude, ProfileType } from '@/lib/types';
-import { db, callFirebaseFunction } from '@/lib/firebase';
+import { db } from '@/lib/firebase';
 import { doc, onSnapshot } from 'firebase/firestore';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -12,6 +12,7 @@ import { Loader2, AlertTriangle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/hooks/use-auth';
 import { grantActitudDefinidaAchievement } from '@/app/actions/achievementActions';
+import { voteOnAttitudeClient } from '@/lib/placeholder-data'; // Import the new client-side function
 
 interface AttitudeVoteProps {
   figureId: string;
@@ -87,11 +88,8 @@ export const AttitudeVote: React.FC<AttitudeVoteProps> = ({ figureId, figureName
     const previousVote = selectedAttitude;
     
     try {
-        const result = await callFirebaseFunction('voteOnAttitude', {
-            figureId,
-            newVote: finalVote,
-            previousVote,
-        });
+        // Use the new client-side function
+        await voteOnAttitudeClient(figureId, finalVote, previousVote);
 
         // --- Handle local storage and UI state ---
         let updatedAttitudes: Attitude[] = JSON.parse(localStorage.getItem(storageKey) || '[]');

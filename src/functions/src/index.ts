@@ -198,61 +198,10 @@ export const updateUserProfile = onCall(async (request) => {
 });
 
 export const voteOnAttitude = onCall(async (request) => {
-    try {
-        if (!request.auth) {
-            throw new HttpsError('unauthenticated', 'Debes iniciar sesión para votar.');
-        }
-
-        const { figureId, newVote, previousVote } = request.data as {
-            figureId: string;
-            newVote: AttitudeKey | null;
-            previousVote: AttitudeKey | null;
-        };
-
-        if (!figureId) {
-            throw new HttpsError('invalid-argument', 'El ID de la figura es obligatorio.');
-        }
-
-        const figureRef = db.collection('figures').doc(figureId);
-        
-        await db.runTransaction(async (transaction) => {
-            const figureDoc = await transaction.get(figureRef);
-            if (!figureDoc.exists) {
-                throw new HttpsError('not-found', 'La figura no existe.');
-            }
-
-            const currentData = figureDoc.data() as Figure;
-            const attitudeCounts = currentData.attitudeCounts || {
-                neutral: 0, fan: 0, simp: 0, hater: 0
-            };
-
-            const newAttitudeCounts = { ...attitudeCounts };
-
-            // Decrement previous vote only if it exists
-            if (previousVote) {
-                newAttitudeCounts[previousVote] = Math.max(0, (newAttitudeCounts[previousVote] || 0) - 1);
-            }
-
-            // Increment new vote if it exists
-            if (newVote) {
-                newAttitudeCounts[newVote] = (newAttitudeCounts[newVote] || 0) + 1;
-            }
-            
-            transaction.update(figureRef, {
-                attitudeCounts: newAttitudeCounts
-            });
-        });
-
-        return { success: true, message: "Voto actualizado correctamente" };
-
-    } catch (error) {
-        if (error instanceof HttpsError) {
-            console.error(`Error de Https en voteOnAttitude: ${error.message}`);
-            throw error;
-        }
-        console.error(`[voteOnAttitude] Fallo Crítico de Transacción para figura ${request.data.figureId}:`, error);
-        throw new HttpsError('internal', 'Ocurrió un error inesperado al procesar tu voto.');
-    }
+    // This function is deprecated. The logic has been moved to the client-side
+    // in `voteOnAttitudeClient` inside `placeholder-data.ts` to match the working
+    // pattern of the emotion voting system.
+    return { success: false, message: "This function is deprecated." };
 });
 
 
