@@ -204,6 +204,7 @@ export const createProfileOnRegister = onUserCreate(async (event) => {
     lastLoginAt: new Date().toISOString(),
     achievements: [],
     isAnonymous: isAnonymous,
+    fcmToken: null,
   };
 
   try {
