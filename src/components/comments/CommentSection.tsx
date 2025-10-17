@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import * as React from 'react';
@@ -25,6 +26,7 @@ import { CountryCombobox } from '../shared/CountryCombobox';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import { GENDER_OPTIONS } from '@/config/genderOptions';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs';
+import { useRouter } from 'next/navigation';
 
 const STAR_SOUNDS: Record<string, string> = {
   '1': 'https://firebasestorage.googleapis.com/v0/b/wikistars5-2yctr.firebasestorage.app/o/audio%2Fstar1.mp3?alt=media&token=a11df570-a6ee-4828-b5a9-81ccbb2c0457',
@@ -183,6 +185,7 @@ export function CommentSection({ figure, highlightedCommentId, sortPreference }:
   const [activeFilter, setActiveFilter] = React.useState<FilterType>('all');
   
   const { toast } = useToast();
+  const router = useRouter();
   const { 
     currentUser, 
     firebaseUser, 
@@ -226,6 +229,11 @@ export function CommentSection({ figure, highlightedCommentId, sortPreference }:
 
     return () => unsubscribe();
   }, [figure.id, toast]);
+  
+  const handleGuestProfileCreation = (profile: LocalProfile) => {
+    updateUserProfile(profile.username, profile.countryCode, profile.gender);
+    router.refresh(); // Force a refresh to update the UI state
+  };
   
   const getAuthorData = () => {
     if (!firebaseUser) return null;
@@ -321,7 +329,7 @@ export function CommentSection({ figure, highlightedCommentId, sortPreference }:
       const canComment = (isAnonymous && localProfile) || (!isAnonymous && currentUser);
       
       if (!canComment) {
-          return <GuestProfileForm onProfileCreated={(profile) => updateUserProfile(profile.username, profile.countryCode, profile.gender)} />;
+          return <GuestProfileForm onProfileCreated={handleGuestProfileCreation} />;
       }
       
       return (
