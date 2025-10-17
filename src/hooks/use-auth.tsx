@@ -328,9 +328,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (isAnonymous && firebaseUser) {
         const profile = { username, countryCode, gender };
         saveLocalProfile(profile);
-        // This setLocalProfile is now technically redundant because of the event listener,
-        // but it provides an immediate optimistic update.
         setLocalProfile(profile);
+        window.dispatchEvent(new Event('local-profile-updated')); 
         return;
     }
 
