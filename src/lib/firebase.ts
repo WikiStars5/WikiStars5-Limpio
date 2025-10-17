@@ -26,6 +26,9 @@ const firebaseConfig = {
 // Esta función garantiza que la app de Firebase se inicialice solo una vez.
 const getFirebaseApp = (): FirebaseApp => {
   if (getApps().length === 0) {
+    if (!firebaseConfig.apiKey || !firebaseConfig.projectId) {
+      throw new Error("Client-side Firebase config environment variables (NEXT_PUBLIC_...) are not set.");
+    }
     return initializeApp(firebaseConfig);
   }
   return getApp();

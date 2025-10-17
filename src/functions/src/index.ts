@@ -291,5 +291,3 @@ export const toggleFeaturedStatus = onCall(async (request) => {
     // to restore the original App Hosting behavior. It is intentionally left empty.
     return { success: false, message: "This function is deprecated." };
 });
-
-  
