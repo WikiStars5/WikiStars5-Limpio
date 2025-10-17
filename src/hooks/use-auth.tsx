@@ -264,14 +264,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       try {
         const userCredential = await signInAnonymously(auth);
         setFirebaseUser(userCredential.user);
-      } catch (error) {
-        console.error("Anonymous sign-in failed:", error);
+      } catch (error: any) {
+        console.error('Anonymous sign-in failed:', error.message);
+        toast({ 
+          title: 'Error de Autenticación Crítico', 
+          description: error.message || 'Fallo desconocido de inicio de sesión.', 
+          variant: 'destructive' 
+        });
         setFirebaseUser(null);
         setCurrentUser(null);
         setIsLoading(false);
       }
     }
-  }, []);
+  }, [toast]);
   
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, handleUser);
